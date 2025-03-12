@@ -34,17 +34,17 @@ def get_historical_data(coin):
 
     return response.json()
 
-def data_to_csv(data, filename):
+def data_to_csv(data, path, crypto_name):
     """Save data to CSV file"""
 
-    with open(f'./data/raw/{filename}', 'w') as csvfile:
+    with open(path, 'w') as csvfile:
         writer = csv.writer(csvfile, delimiter=',')
         writer.writerow(['date', 'price'])
         writer.writerows(data)
+        print(f'-- {crypto_name} data file create --')
 
-def remove_files():
+def remove_files(path):
 
-    path = './data/raw/'
     files = os.listdir(path)
     for file in files:
         os.remove(path+file)
@@ -54,9 +54,12 @@ if __name__=='__main__':
     with open('./crypto_wallet.json', 'r') as file:
         crypto_wallet = json.load(file)
 
-    remove_files()
+    path = './data/raw/'
+    remove_files(path)
     for symbol in crypto_wallet:
 
-        name = crypto_wallet.get(symbol)
-        crypto_data = get_historical_data(name).get('prices')
-        data_to_csv(crypto_data, f'{symbol}_data{DATE}.csv')
+        crypto_name = crypto_wallet.get(symbol)
+        crypto_data = get_historical_data(crypto_name).get('prices')
+        data_to_csv(crypto_data, f'{path}/{symbol}_data_{DATE}.csv', crypto_name.capitalize())
+
+    print('\nEnd of extraction')

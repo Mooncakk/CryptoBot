@@ -25,8 +25,8 @@ if __name__=='__main__':
         df['date'] = pd.to_datetime(df['date'], unit='ms').dt.date
         df = df.dropna()
         df = df.drop_duplicates(subset=['date'], keep='last')
-        df.to_csv(f'{processed_files_dir}/{filename}', index=False)
+        df.to_csv(f'{processed_files_dir}/cleaned_{filename}', index=False)
 
-
+    print('-- Data processed --')
 
 

@@ -1,5 +1,5 @@
 import json
-from pprint import pprint
+from datetime import date
 
 import snowflake.connector
 
@@ -10,10 +10,12 @@ SCHEMA = 'cryptobot_schema'
 TABLE = 'crypto_prices'
 STAGE = 'dataset'
 
+DATE = date.today()
+
 with open('./crypto_wallet.json', 'r') as file:
      CRYPTO_WALLET = json.load(file)
 
-USER = 'mooncak'
+USER = 'admin'
 
 def run_query(query):
     with snowflake.connector.connect(connection_name='myconnection') as conn:
@@ -65,7 +67,7 @@ def insert_temp_table():
                   (SELECT $1 as date,
                   $2 as {crypto}_price
                   FROM @{DATABASE}.{SCHEMA}.dataset/)
-                  FILES = ('{crypto}_data.csv')
+                  FILES = ('cleaned_{crypto}_data_{DATE}.csv')
                   FILE_FORMAT = {DATABASE}.{SCHEMA}.CLASSIC_CSV""")
 
 
@@ -76,7 +78,8 @@ def create_table_query():
     select_clause = f'SELECT {tables[0]}.date, {", ".join(columns)}\n'
     from_clause = f'FROM {tables[0]}\n'
     join_clause = [f'JOIN {table} ON {tables[0]}.date = {table}.date' for table in tables[1:]]
-    return select_clause + from_clause + "\n".join(join_clause)
+    query = f'CREATE OR REPLACE TABLE {DATABASE}.{SCHEMA}.{TABLE} AS {select_clause} {from_clause}' + "\n".join(join_clause)
+    return query
 
 
 def main():
@@ -90,8 +93,8 @@ def main():
     create_temp_table()
     create_file_format()
     insert_temp_table()
-    run_query(create_table_query())
+    query = create_table_query()
+    run_query(query)
 
-"""A supprimer"""
-run_query(f'DROP DATABASE {DATABASE}')
+
 main()
