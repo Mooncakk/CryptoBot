@@ -55,6 +55,8 @@ if __name__=='__main__':
         crypto_wallet = json.load(file)
 
     path = './data/raw/'
+    if not os.path.exists(path):
+        os.mkdir(path)
     remove_files(path)
     for symbol in crypto_wallet:
 

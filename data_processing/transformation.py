@@ -17,6 +17,8 @@ if __name__=='__main__':
     filenames = os.listdir('./data/raw')
     raw_data_dir = './data/raw'
     processed_files_dir = './data/processed'
+    if not os.path.exists(processed_files_dir):
+        os.mkdir(processed_files_dir)
     remove_files(processed_files_dir)
 
     for filename in filenames:
