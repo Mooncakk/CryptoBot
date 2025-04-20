@@ -1,4 +1,4 @@
 {
-  "btc": "bitcoin",
-  "eth": "ethereum"
+  "bitcoin": "BTC/USDC:USDC",
+  "ethereum": "ETH/USDC:USDC"
 }

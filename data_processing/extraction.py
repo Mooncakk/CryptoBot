@@ -1,67 +1,85 @@
-import csv
+import shutil
+from datetime import datetime, timedelta
 import json
 import os
-from datetime import date
+import csv
 
-import requests
+import boto3
+import logging
+from botocore.exceptions import ClientError
+import ccxt
 
-ROOT_URL = "https://api.coingecko.com/api/v3"
-HEADER = {
-        "accept": "application/json",
-        "x_cg_demo_api_key": "CG-fCmgjnk4Fm4pQLbin5Lr7y3G"
-    }
-DATE = date.today()
+PARAMS = {
+    'wallet_address': '0x0ed45dB82809056640845d68a8ecb2566D1E1385',
+    'private_key': '0x6cb7bed670d0be35237d7ed54dff65dd9313c68ff026c5218f62a0d973f6a625'
+}
+
+S3 = boto3.resource('s3')
 
 
-def get_data(coin):
-    """Get coin data"""
+def get_ohlcv(coin):
+    """Get coin's data"""
 
-    root_url = ROOT_URL
-    header = HEADER
-    response = requests.get(f'{root_url}/coins/{coin}', params=header)
+    exchange = ccxt.hyperliquid(PARAMS)
+    current_datetime = datetime.now()
+    hours = timedelta(hours=60)
+    date = current_datetime - hours
+    since_date = round(date.timestamp()) * 1000
 
-    return response.json()
+    data = exchange.fetch_ohlcv(coin, '4h', since=since_date)
 
-def get_historical_data(coin):
-    """Get coin historical chart data"""
+    return data
 
-    root_url = ROOT_URL
-    header = HEADER
-    currency = "usd"
-    time = "365"
-    response = requests.get(f"{root_url}/coins/{coin}/market_chart?vs_currency={currency}&days={time}",
-                             params=header)
-
-    return response.json()
-
-def data_to_csv(data, path, crypto_name):
+def data_to_csv(data, crypto_name):
     """Save data to CSV file"""
 
-    with open(path, 'w') as csvfile:
+    with open(f'./temp/{crypto_name}.csv', 'w') as csvfile:
         writer = csv.writer(csvfile, delimiter=',')
-        writer.writerow(['date', 'price'])
         writer.writerows(data)
-        print(f'-- {crypto_name} data file create --')
 
-def remove_files(path):
 
-    files = os.listdir(path)
-    for file in files:
-        os.remove(path+file)
+def save_file(data, object_name, crypto_name):
+    """Save data to s3 bucket"""
+
+    try:
+        bucket.upload_file(data, object_name)
+    except ClientError as e:
+        logging.error(e)
+        return False
+
+    print(f'-- {crypto_name} data file created --')
+
+def create_temp(path):
+
+    os.mkdir(path)
+
+
+def remove_temp(path):
+
+    shutil.rmtree(path)
+
 
 if __name__=='__main__':
 
     with open('./crypto_wallet.json', 'r') as file:
         crypto_wallet = json.load(file)
 
-    path = './data/raw/'
-    if not os.path.exists(path):
-        os.mkdir(path)
-    remove_files(path)
-    for symbol in crypto_wallet:
+    current_time = datetime.now().strftime('%Y_%m_%d_%H%M%S')
+    bucket_name = 's3bucket-cryptobot'
+    bucket = S3.Bucket(bucket_name)
+    path = 'data/raw'
+    temp_path = './temp'
+    bucket.objects.filter(Prefix=path).delete()
+    create_temp(temp_path)
 
-        crypto_name = crypto_wallet.get(symbol)
-        crypto_data = get_historical_data(crypto_name).get('prices')
-        data_to_csv(crypto_data, f'{path}/{symbol}_data_{DATE}.csv', crypto_name.capitalize())
+    for crypto_name in crypto_wallet:
+        
+        coin = crypto_wallet.get(crypto_name)
+        coin_ohlcv = get_ohlcv(coin)
+        symbol = coin.split('/')[0]
+        filename = f'{path}/{crypto_name}_{symbol}_ohlvc_{current_time}.csv'
+        data_to_csv(coin_ohlcv, crypto_name)
+        save_file(f'{temp_path}/{crypto_name}.csv', filename, crypto_name.capitalize())
 
+    remove_temp(temp_path)
     print('\nEnd of extraction')

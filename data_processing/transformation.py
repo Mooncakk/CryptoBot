@@ -1,34 +1,26 @@
 import os
-from datetime import date
 
 import pandas as pd
+import boto3
+import awswrangler as wr
 
-DATE = date.today()
 
-
-def remove_files(path):
-
-    files = os.listdir(path)
-    for file in files:
-        os.remove(f'{path}/{file}')
+S3 = boto3.resource('s3')
 
 if __name__=='__main__':
 
-    filenames = os.listdir('./data/raw')
-    raw_data_dir = './data/raw'
-    processed_files_dir = './data/processed'
-    if not os.path.exists(processed_files_dir):
-        os.mkdir(processed_files_dir)
-    remove_files(processed_files_dir)
+    bucket_name = ('s3bucket-cryptobot')
+    bucket = S3.Bucket(bucket_name)
+    raw_data_path = 'data/raw/'
+    raw_files = bucket.objects.filter(Prefix=raw_data_path)
+    processed_files_path = 'data/processed'
+    bucket.objects.filter(Prefix=processed_files_path).delete()
 
-    for filename in filenames:
-
-        df = pd.read_csv(f'{raw_data_dir}/{filename}')
-        df['date'] = pd.to_datetime(df['date'], unit='ms').dt.date
-        df = df.dropna()
-        df = df.drop_duplicates(subset=['date'], keep='last')
-        df.to_csv(f'{processed_files_dir}/cleaned_{filename}', index=False)
+    for file in raw_files:
+        df = wr.s3.read_csv(f's3://s3bucket-cryptobot/{file.key}',
+                            names=['date', 'open', 'high', 'low', 'close', 'volume'])
+        df['date'] = pd.to_datetime(df['date'], unit='ms')
+        filename = file.key.replace(raw_data_path, '')
+        wr.s3.to_csv(df, f's3://s3bucket-cryptobot/{processed_files_path}/processed_{filename}', index=False)
 
     print('-- Data processed --')
-
-

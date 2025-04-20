@@ -1,19 +1,13 @@
+
 import json
-from datetime import date
 
 import snowflake.connector
-
 
 WAREHOUSE = 'cryptobot'
 DATABASE = 'cryptobotdb'
 SCHEMA = 'cryptobot_schema'
-TABLE = 'crypto_prices'
 STAGE = 'dataset'
 
-DATE = date.today()
-
-with open('./crypto_wallet.json', 'r') as file:
-     CRYPTO_WALLET = json.load(file)
 
 USER = 'admin'
 
@@ -23,7 +17,6 @@ def run_query(query):
         rows = cur.fetchall()
         for row in rows:
             print(row)
-
 
 
 def manage_role():
@@ -38,21 +31,33 @@ def manage_role():
 
     run_query('USE ROLE cryptobot_role')
 
-def manage_stage():
+
+def manage_stage(bucket_path):
 
     run_query(f"""CREATE STAGE IF NOT EXISTS {DATABASE}.{SCHEMA}.{STAGE} 
               ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE') 
               DIRECTORY = (ENABLE = true)""")
 
-    run_query(f"PUT file://data/processed/* @{DATABASE}.{SCHEMA}.{STAGE} "
-          "auto_compress=false")
+    run_query(f'REMOVE @{DATABASE}.{SCHEMA}.dataset/')
 
-def create_temp_table():
+    run_query(f"PUT file://{bucket_path}/* @{DATABASE}.{SCHEMA}.{STAGE} "
+              "auto_compress=false")
 
-    for crypto in CRYPTO_WALLET:
-        run_query(f"""CREATE OR REPLACE TABLE {DATABASE}.{SCHEMA}.tmp_{crypto}_price 
-                    (date DATE,
-                    {crypto}_price FLOAT)""")
+
+def create_table(wallet):
+
+    for coin in wallet:
+        
+        run_query(f"""CREATE OR REPLACE TABLE {DATABASE}.{SCHEMA}.{coin}
+                  (
+                  date DATETIME,
+                  open FLOAT,
+                  high FLOAT,
+                  low FLOAT,
+                  close FLOAT,
+                  volume FLOAT
+                  )""")
+
 
 def create_file_format():
 
@@ -60,41 +65,39 @@ def create_file_format():
                     TYPE = 'CSV'
                     SKIP_HEADER = 1""")
 
-def insert_temp_table():
 
-    for crypto in CRYPTO_WALLET:
-        run_query(f"""COPY INTO {DATABASE}.{SCHEMA}.tmp_{crypto}_price FROM 
-                  (SELECT $1 as date,
-                  $2 as {crypto}_price
-                  FROM @{DATABASE}.{SCHEMA}.dataset/)
-                  FILES = ('cleaned_{crypto}_data_{DATE}.csv')
+def insert_to_table(wallet):
+
+    for crypto_name in wallet:
+        pairs = wallet.get(crypto_name)
+        symbol = pairs.split('/')[0]
+        run_query(f"""COPY INTO {DATABASE}.{SCHEMA}.{crypto_name}
+                  FROM @{DATABASE}.{SCHEMA}.dataset/                  
+                  PATTERN = '.*{symbol}.*'
                   FILE_FORMAT = {DATABASE}.{SCHEMA}.CLASSIC_CSV""")
-
-
-def create_table_query():
-    tables = [f'{DATABASE}.{SCHEMA}.tmp_{crypto}_price' for crypto in CRYPTO_WALLET]
-    columns = [f'{crypto}_price' for crypto in CRYPTO_WALLET]
-
-    select_clause = f'SELECT {tables[0]}.date, {", ".join(columns)}\n'
-    from_clause = f'FROM {tables[0]}\n'
-    join_clause = [f'JOIN {table} ON {tables[0]}.date = {table}.date' for table in tables[1:]]
-    query = f'CREATE OR REPLACE TABLE {DATABASE}.{SCHEMA}.{TABLE} AS {select_clause} {from_clause}' + "\n".join(join_clause)
-    return query
-
+        
 
 def main():
+
+    with open('./crypto_wallet.json', 'r') as file:
+     crypto_wallet = json.load(file)
+
+    bucket_path = 's3://s3bucket-cryptobot/data/processed'
 
     run_query(f"CREATE WAREHOUSE IF NOT EXISTS {WAREHOUSE} WITH warehouse_size='x-small'")
     run_query(f'CREATE DATABASE IF NOT EXISTS {DATABASE}')
     run_query(f'CREATE SCHEMA IF NOT EXISTS {DATABASE}.{SCHEMA}')
-
+    
     manage_role()
-    manage_stage()
-    create_temp_table()
+    manage_stage(bucket_path)
+    create_table(crypto_wallet)
     create_file_format()
-    insert_temp_table()
-    query = create_table_query()
-    run_query(query)
-
+    insert_to_table(crypto_wallet)
+    
 
 main()
+#manage_stage()
+
+#run_query(f'drop database {DATABASE}')
+#run_query(f'DROP warehouse {WAREHOUSE}')
+
