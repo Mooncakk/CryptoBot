@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 import json
 import os
 import csv
+import logging
 
 import boto3
-import logging
 from botocore.exceptions import ClientError
 import ccxt
 
@@ -47,7 +47,7 @@ def save_file(data, object_name, crypto_name):
         logging.error(e)
         return False
 
-    print(f'-- {crypto_name} data file created --')
+    logging.info(f'-- {crypto_name} data file created --')
 
 def create_temp(path):
 
@@ -64,6 +64,7 @@ if __name__=='__main__':
     with open('./crypto_wallet.json', 'r') as file:
         crypto_wallet = json.load(file)
 
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     current_time = datetime.now().strftime('%Y_%m_%d_%H%M%S')
     bucket_name = 's3bucket-cryptobot'
     bucket = S3.Bucket(bucket_name)
@@ -82,4 +83,4 @@ if __name__=='__main__':
         save_file(f'{temp_path}/{crypto_name}.csv', filename, crypto_name.capitalize())
 
     remove_temp(temp_path)
-    print('\nEnd of extraction')
+    logging.info('End of extraction')

@@ -1,4 +1,4 @@
-import os
+import logging
 
 import pandas as pd
 import boto3
@@ -9,6 +9,7 @@ S3 = boto3.resource('s3')
 
 if __name__=='__main__':
 
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     bucket_name = ('s3bucket-cryptobot')
     bucket = S3.Bucket(bucket_name)
     raw_data_path = 'data/raw/'
@@ -23,4 +24,4 @@ if __name__=='__main__':
         filename = file.key.replace(raw_data_path, '')
         wr.s3.to_csv(df, f's3://s3bucket-cryptobot/{processed_files_path}/processed_{filename}', index=False)
 
-    print('-- Data processed --')
+    logging.info('Data processed')
