@@ -9,10 +9,6 @@ import boto3
 from botocore.exceptions import ClientError
 import ccxt
 
-PARAMS = {
-    'wallet_address': '0x0ed45dB82809056640845d68a8ecb2566D1E1385',
-    'private_key': '0x6cb7bed670d0be35237d7ed54dff65dd9313c68ff026c5218f62a0d973f6a625'
-}
 
 S3 = boto3.resource('s3')
 
@@ -20,7 +16,7 @@ S3 = boto3.resource('s3')
 def get_ohlcv(coin):
     """Get coin's data"""
 
-    exchange = ccxt.hyperliquid(PARAMS)
+    exchange = ccxt.hyperliquid(params)
     current_datetime = datetime.now()
     hours = timedelta(hours=60)
     date = current_datetime - hours
@@ -47,7 +43,13 @@ def save_file(data, object_name, crypto_name):
         logging.error(e)
         return False
 
-    logging.info(f'-- {crypto_name} data file created --')
+    logging.info(f'{crypto_name} data file created')
+
+
+def open_json(filename):
+
+    with open(filename, 'r') as file:
+        return json.load(file)
 
 def create_temp(path):
 
@@ -61,8 +63,8 @@ def remove_temp(path):
 
 if __name__=='__main__':
 
-    with open('./crypto_wallet.json', 'r') as file:
-        crypto_wallet = json.load(file)
+    crypto_wallet = open_json('./crypto_wallet.json')
+    params = open_json('./hyperliquid_id.json')
 
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     current_time = datetime.now().strftime('%Y_%m_%d_%H%M%S')
