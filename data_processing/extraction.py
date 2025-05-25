@@ -61,7 +61,7 @@ def remove_temp(path):
     shutil.rmtree(path)
 
 
-if __name__=='__main__':
+def main():
 
     crypto_wallet = open_json('./crypto_wallet.json')
     params = open_json('./hyperliquid_id.json')
@@ -86,3 +86,7 @@ if __name__=='__main__':
 
     remove_temp(temp_path)
     logging.info('End of extraction')
+
+
+if __name__=='__main__':
+    main()
