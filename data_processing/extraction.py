@@ -13,10 +13,10 @@ import ccxt
 S3 = boto3.resource('s3')
 
 
-def get_ohlcv(coin):
+def get_ohlcv(hyperliquid_params, coin):
     """Get coin's data"""
 
-    exchange = ccxt.hyperliquid(params)
+    exchange = ccxt.hyperliquid(hyperliquid_params)
     current_datetime = datetime.now()
     hours = timedelta(hours=60)
     date = current_datetime - hours
@@ -78,7 +78,7 @@ def main():
     for crypto_name in crypto_wallet:
         
         coin = crypto_wallet.get(crypto_name)
-        coin_ohlcv = get_ohlcv(coin)
+        coin_ohlcv = get_ohlcv(params, coin)
         symbol = coin.split('/')[0]
         filename = f'{path}/{crypto_name}_{symbol}_ohlvc_{current_time}.csv'
         data_to_csv(coin_ohlcv, crypto_name)
