@@ -11,6 +11,8 @@ import ccxt
 
 
 S3 = boto3.resource('s3')
+bucket_name = 's3bucket-cryptobot'
+bucket = S3.Bucket(bucket_name)
 
 
 def get_ohlcv(hyperliquid_params, coin):
@@ -53,7 +55,11 @@ def open_json(filename):
 
 def create_temp(path):
 
-    os.mkdir(path)
+    try:
+        os.mkdir(path)
+    except FileExistsError:
+        shutil.rmtree(path)
+        os.mkdir(path)
 
 
 def remove_temp(path):
@@ -68,8 +74,6 @@ def main():
 
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     current_time = datetime.now().strftime('%Y_%m_%d_%H%M%S')
-    bucket_name = 's3bucket-cryptobot'
-    bucket = S3.Bucket(bucket_name)
     path = 'data/raw'
     temp_path = './temp'
     bucket.objects.filter(Prefix=path).delete()
