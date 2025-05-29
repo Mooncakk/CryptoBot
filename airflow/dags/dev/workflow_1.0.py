@@ -7,7 +7,7 @@ from airflow.operators.empty import EmptyOperator
 from airflow.operators.bash import BashOperator
 from airflow.utils.edgemodifier import Label
 
-from etl_wt.data_processing import extraction, transformation, load
+from etl import extraction, transformation, load
 
 DAG_PATH = f'{os.getenv("AIRFLOW_HOME")}/dags'
 os.chdir(DAG_PATH)
