@@ -4,6 +4,7 @@ import json
 import os
 import csv
 import logging
+from typing import Optional
 
 import boto3
 from botocore.exceptions import ClientError
@@ -13,7 +14,7 @@ import ccxt
 S3 = boto3.resource('s3')
 
 
-def get_ohlcv(hyperliquid_params: dict, coin: str) -> list:
+def get_ohlcv(hyperliquid_params: dict[str, str], coin: str) -> list[list]:
     """Get coin's data"""
 
     exchange = ccxt.hyperliquid(hyperliquid_params)
@@ -34,25 +35,25 @@ def data_to_csv(data: list, crypto_name: str) -> None:
         writer.writerows(data)
 
 
-def save_file(s3bucket: str, data: str, object_name: str, crypto_name: str) -> None | bool:
+def save_file(bucket_name: str, data: str, object_name: str, crypto_name: str) -> Optional[bool]:
     """Save data to s3 bucket"""
 
     try:
-        s3bucket.upload_file(data, object_name)
+        S3.Bucket(bucket_name).upload_file(data, object_name)
     except ClientError as e:
         logging.error(e)
         return False
 
-    logging.info(f'{crypto_name} data file created')
+    return logging.info(f'{crypto_name} data file created')
 
 
 def open_params(filename: str) -> json:
-
+    """Open json file"""
     with open(filename, 'r') as file:
         return json.load(file)
 
 def create_temp(path: str) -> None:
-
+    """Create a directory if not exist"""
     try:
         os.mkdir(path)
     except FileExistsError:
@@ -61,11 +62,12 @@ def create_temp(path: str) -> None:
 
 
 def remove_temp(path: str) -> None:
+    """Remove a directory if exist"""
 
     shutil.rmtree(path)
 
 
-def main():
+def main() -> None:
 
     params = open_params('../utils/utils.json')
     crypto_wallet = params.get('crypto_wallet')
@@ -76,7 +78,8 @@ def main():
     current_time = datetime.now().strftime('%Y_%m_%d_%H%M%S')
     path = 'data/raw'
     temp_path = './temp'
-    bucket = S3.Bucket(aws_params.get('s3bucket_name'))
+    bucket_name = aws_params.get('s3bucket_name')
+    bucket = S3.Bucket(bucket_name)
     bucket.objects.filter(Prefix=path).delete()
     create_temp(temp_path)
 
@@ -87,7 +90,7 @@ def main():
         symbol = coin.split('/')[0]
         filename = f'{path}/{crypto_name}_{symbol}_ohlvc_{current_time}.csv'
         data_to_csv(coin_ohlcv, crypto_name)
-        save_file(bucket,f'{temp_path}/{crypto_name}.csv', filename, crypto_name.capitalize())
+        save_file(bucket_name,f'{temp_path}/{crypto_name}.csv', filename, crypto_name.capitalize())
 
     remove_temp(temp_path)
     logging.info('End of extraction')
