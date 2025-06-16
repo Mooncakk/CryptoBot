@@ -10,7 +10,20 @@ STAGE = 'dataset'
 
 USER = 'admin'
 
-def run_query(query):
+def open_params(filename: str) -> tuple[dict[str, str], str]:
+    """Open a json file and gets different parameters"""
+
+    with open(filename, 'r') as file:
+        params = json.load(file)
+
+    crypto_wallet = params.get('crypto_wallet')
+    aws_params = params.get('aws_params')
+    s3bucket_name = aws_params.get('s3bucket_name')
+
+    return crypto_wallet, s3bucket_name
+
+
+def run_query(query: str) -> None:
 
     with snowflake.connector.connect(connection_name='myconnection') as conn:
         cur = conn.cursor().execute(query)
@@ -20,7 +33,7 @@ def run_query(query):
 
 
 
-def manage_role():
+def manage_role() -> None:
 
     run_query('CREATE ROLE IF NOT EXISTS cryptobot_role')
 
@@ -33,7 +46,7 @@ def manage_role():
     run_query('USE ROLE cryptobot_role')
 
 
-def storage_integration(name):
+def storage_integration(name: str) -> None:
 
     run_query(f"""CREATE STORAGE INTEGRATION IF NOT EXISTS {name}
                 TYPE = EXTERNAL_STAGE
@@ -45,7 +58,7 @@ def storage_integration(name):
                 """)
 
 
-def manage_stage(storage_int, bucket_path):
+def manage_stage(storage_int: str, bucket_path: str) -> None:
 
     run_query(f"""CREATE OR REPLACE STAGE {DATABASE}.{SCHEMA}.{STAGE}
               STORAGE_INTEGRATION = {storage_int}
@@ -54,7 +67,7 @@ def manage_stage(storage_int, bucket_path):
               URL = {bucket_path}""")
 
 
-def create_table(wallet):
+def create_table(wallet: dict[str, str]) -> None:
 
     for coin in wallet:
 
@@ -69,14 +82,14 @@ def create_table(wallet):
                   )""")
 
 
-def create_file_format():
+def create_file_format() -> None:
 
     run_query(f"""CREATE FILE FORMAT IF NOT EXISTS {DATABASE}.{SCHEMA}.CLASSIC_CSV
                     TYPE = 'CSV'
                     SKIP_HEADER = 1""")
 
 
-def insert_to_table(wallet):
+def insert_to_table(wallet: dict[str, str]) -> None:
 
     for crypto_name in wallet:
         pairs = wallet.get(crypto_name)
@@ -87,14 +100,13 @@ def insert_to_table(wallet):
                   FILE_FORMAT = {DATABASE}.{SCHEMA}.CLASSIC_CSV""")
 
 
-def main():
+def main() -> None:
 
-    with open('./crypto_wallet.json', 'r') as file:
-        crypto_wallet = json.load(file)
+    crypto_wallet, bucket_name = open_params('./utils/utils.json')
 
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     integration_name = 's3_int'
-    bucket_path = f's3://s3bucket-cryptobot/data/processed/'
+    bucket_path = f's3://{bucket_name}/data/processed/'
 
     run_query(f"CREATE WAREHOUSE IF NOT EXISTS {WAREHOUSE} WITH warehouse_size='x-small'")
     run_query(f'CREATE DATABASE IF NOT EXISTS {DATABASE}')
@@ -111,3 +123,4 @@ def main():
 if __name__=='__main__':
 
     main()
+    #run_query(f'drop database {DATABASE}')

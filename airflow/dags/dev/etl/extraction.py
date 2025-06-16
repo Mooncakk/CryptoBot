@@ -47,13 +47,23 @@ def save_file(bucket_name: str, data: str, object_name: str, crypto_name: str) -
     return logging.info(f'{crypto_name} data file created')
 
 
-def open_params(filename: str) -> json:
-    """Open json file"""
+def open_params(filename: str) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
+    """Open a json file and gets different parameters"""
+
     with open(filename, 'r') as file:
-        return json.load(file)
+        params = json.load(file)
+
+    crypto_wallet = params.get('crypto_wallet')
+    hyperliquid_params = params.get('hyperliquid_params')
+    aws_params = params.get('aws_params')
+
+    return crypto_wallet, hyperliquid_params, aws_params
+
+
 
 def create_temp(path: str) -> None:
     """Create a directory if not exist"""
+
     try:
         os.mkdir(path)
     except FileExistsError:
@@ -69,11 +79,7 @@ def remove_temp(path: str) -> None:
 
 def main() -> None:
 
-    params = open_params('../utils/utils.json')
-    crypto_wallet = params.get('crypto_wallet')
-    hyperliquid_params = params.get('hyperliquid_params')
-    aws_params = params.get('aws_params')
-
+    crypto_wallet, hyperliquid_params, aws_params = open_params('./utils/utils.json')
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     current_time = datetime.now().strftime('%Y_%m_%d_%H%M%S')
     path = 'data/raw'

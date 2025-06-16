@@ -361,31 +361,37 @@ class PerpHyperliquid:
         except Exception as e:
             return Info(success=False, message="Error or no orders to cancel")
         
-def query(sql):
+def query(sql: str):
 
     conn = snowflake.connector.connect(connection_name='myconnection')
     cur = conn.cursor().execute(sql)
     return cur.fetch_pandas_all()
 
-def crypto_wallet():
-    with open('./data_processing/crypto_wallet.json', 'r') as file:
-        return  json.load(file)
+def open_params(filename: str) -> tuple[dict[str, str], dict[str, str]]:
+    """Open a json file and gets different parameters"""
+
+    with open(filename, 'r') as file:
+        params = json.load(file)
+
+    crypto_wallet = params.get('crypto_wallet')
+    hyperliquid_params = params.get('hyperliquid_params')
+
+    return crypto_wallet, hyperliquid_params
 
 
-async def main():
+async def main() -> None:
 
-    with open("./hyperliquid_id.json", "r") as file:
-        hyperliquid_id = json.load(file)
-    ex = PerpHyperliquid(hyperliquid_id)
+    crypto_wallet, hyperliquid_params = open_params('./utils/utils.json')
+    ex = PerpHyperliquid(hyperliquid_params)
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     await ex.load_markets()
     usd = await ex.get_balance()
 
-    for crypto_name in crypto_wallet():
+    for crypto_name in crypto_wallet:
 
         sql = f'select * from {DATABASE}.{SCHEMA}.{crypto_name}'
         df = query(sql)
-        pairs = crypto_wallet().get(crypto_name)
+        pairs = crypto_wallet.get(crypto_name)
         coin = pairs.split('/')[0]
         df["rsi"] = ta.momentum.rsi(df["CLOSE"], 14)
         positions = await ex.get_open_positions(pairs=[f"{coin}/USD"])
@@ -409,8 +415,8 @@ async def main():
             
     await ex.close()
 
-
-asyncio.run(main())
+if __name__=='__main__':
+    asyncio.run(main())
 
 
 
