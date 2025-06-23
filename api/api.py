@@ -1,7 +1,8 @@
 import json
 from datetime import datetime
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import snowflake.connector
 import ccxt
@@ -18,6 +19,23 @@ def run_query(sql: str):
 DATABASE = 'cryptobotdb'
 SCHEMA = 'cryptobot_schema'
 
+
+class MyException(Exception):
+
+    def __init__(self, coin : str,):
+        self.coin = coin
+
+
+@api.exception_handler(MyException)
+def my_exception_handler(request: Request, exception: MyException):
+    return JSONResponse(
+        status_code=404,
+        content={
+            'message': f'{exception.coin} not in wallet'
+        }
+    )
+
+
 @api.get('/coins', name='coins', description='Get list of coins in the wallet')
 def get_coins():
 
@@ -31,11 +49,16 @@ def get_coins():
 def get_coin_info(coin: str):
 
     wallet = get_coins()
-    pairs = wallet.get(coin)
-    symbol = pairs.split('/')[0]
 
+    if coin not in wallet:
+        raise MyException(coin)
+
+    pairs = wallet[coin]
+    symbol = pairs.split('/')[0]
     return {'coin': coin,
             'symbol': symbol}
+
+
 
 class Ohclv(BaseModel):
 
@@ -51,23 +74,28 @@ class Ohclv(BaseModel):
 def get_coin_agg(coin: str):
 
     avg = {}
-    try:
-        ohclv_avg = run_query(f"""
+
+    if coin not in get_coins():
+        raise MyException(coin)
+
+    ohclv_avg = run_query(f"""
                                 SELECT AVG(OPEN), AVG(HIGH), AVG(LOW), AVG(CLOSE), AVG(VOLUME)
                                 FROM {DATABASE}.{SCHEMA}.{coin}
                                 """)
-        for data_point, aggregate in zip(Ohclv(), ohclv_avg):
-            avg[data_point[0]] = aggregate
-        return avg
+    for data_point, aggregate in zip(Ohclv(), ohclv_avg):
+        avg[data_point[0]] = aggregate
+    return avg
 
-    except IndexError:
-        return {}
+
 
 
 @api.get('/coins/{coin}/max', name='coin higher OHCLV', description="Get coin's higher rates for the last 56 hours" )
 def get_coin_agg(coin: str):
 
     _max = {}
+
+    if coin not in get_coins():
+        raise MyException(coin)
 
     ohclv_max = run_query(f"""
                             SELECT MAX(OPEN), MAX(HIGH), MAX(LOW), MAX(CLOSE), MAX(VOLUME)
@@ -84,6 +112,9 @@ def get_coin_agg(coin: str):
 def get_coin_agg(coin: str):
 
     _min = {}
+
+    if coin not in get_coins():
+        raise MyException(coin)
 
     ohclv_min = run_query(f"""
                             SELECT MIN(OPEN), MIN(HIGH), MIN(LOW), MIN(CLOSE), MIN(VOLUME)
@@ -134,3 +165,6 @@ def get_trades(coin: str):
 
     return exchange().fetch_my_trades(pair, since_date)
 
+
+
+#creer une exception handler pour ne oas a réecrire les exception dans chaque fonction
