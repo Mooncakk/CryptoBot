@@ -1,5 +1,5 @@
+
 import shutil
-from datetime import datetime, timedelta
 import json
 import os
 import logging
@@ -12,6 +12,7 @@ from ccxt import hyperliquid
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pendulum
 
 S3 = boto3.resource('s3')
 
@@ -94,8 +95,10 @@ def main():
     path = 'data/bronze/trades'
     #manage_bucket(aws_params, path)
     create_temp()
-    data_to_parquet(get_positions(ex), './temp/positions.parquet')
-    data_to_parquet(get_trades(ex), './temp/trades.parquet')
+    current_time = pendulum.now().format('Y_MM_D_Hms')
+
+    data_to_parquet(get_positions(ex), f'./temp/positions_{current_time}.parquet')
+    data_to_parquet(get_trades(ex), f'./temp/trades_{current_time}.parquet')
 
     #bucket_name = aws_params.get('s3bucket_name')
     #bucket = S3.Bucket(bucket_name)
