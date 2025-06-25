@@ -61,7 +61,7 @@ def open_params(filename: str) -> tuple[dict[str, str], dict[str, str], dict[str
 
 
 
-def create_temp(path: str) -> None:
+def create_temp(path: str = './temp') -> None:
     """Create a directory if not exist"""
 
     try:
@@ -71,7 +71,7 @@ def create_temp(path: str) -> None:
         os.mkdir(path)
 
 
-def remove_temp(path: str) -> None:
+def remove_temp(path: str = './temp') -> None:
     """Remove a directory if exist"""
 
     shutil.rmtree(path)
@@ -83,11 +83,11 @@ def main() -> None:
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     current_time = datetime.now().strftime('%Y_%m_%d_%H%M%S')
     path = 'data/raw'
-    temp_path = './temp'
     bucket_name = aws_params.get('s3bucket_name')
     bucket = S3.Bucket(bucket_name)
     bucket.objects.filter(Prefix=path).delete()
-    create_temp(temp_path)
+    temp_path = './temp'
+    create_temp()
 
     for crypto_name in crypto_wallet:
         
@@ -98,7 +98,7 @@ def main() -> None:
         data_to_csv(coin_ohlcv, crypto_name)
         save_file(bucket_name,f'{temp_path}/{crypto_name}.csv', filename, crypto_name.capitalize())
 
-    remove_temp(temp_path)
+    remove_temp()
     logging.info('End of extraction')
 
 
