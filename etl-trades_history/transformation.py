@@ -4,6 +4,8 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from pandas.core.interchange.dataframe_protocol import DataFrame
+import boto3
+from botocore.exceptions import ClientError
 
 
 def positions_processing(file: str) -> DataFrame:
@@ -56,6 +58,17 @@ def data_to_parquet(data: DataFrame, path: str) -> None:
     table = pa.Table.from_pandas(data)
     pq.write_table(table, path)
 
+
+def save_file(bucket_name: str, data: str, object_name: str) -> Optional[bool]:
+    """Save data to s3 bucket"""
+
+    try:
+        S3.Bucket(bucket_name).upload_file(data, object_name)
+    except ClientError as e:
+        logging.error(e)
+        return False
+
+    return logging.info(f'{object_name} file created')
 
 def main():
 
