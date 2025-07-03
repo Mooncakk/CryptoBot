@@ -134,9 +134,9 @@ def main():
     positions = positions_processing(f'{s3_url}/{positions_file}')
     trades_history = trades_processing(f'{s3_url}/{trades_file}')
     s3_silver_url = f's3://{bucket_name}/data/silver/etl2'
-    current_time = pendulum.now().format('Y_MM_DD_Hmms')
-    data_to_parquet(positions, f'{s3_silver_url}/positions_cleaned-{current_time}.parquet')
-    data_to_parquet(trades_history, f'{s3_silver_url}/trades_history_cleaned-{current_time}.parquet')
+    current_datetime = pendulum.now().format('Y_MM_DD_HHmmss')
+    data_to_parquet(positions, f'{s3_silver_url}/positions_cleaned-{current_datetime}.parquet')
+    data_to_parquet(trades_history, f'{s3_silver_url}/trades_history_cleaned-{current_datetime}.parquet')
 
 
 if __name__=='__main__':

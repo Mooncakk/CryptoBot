@@ -60,12 +60,12 @@ def main() -> None:
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     hyperliquid_id, bucket_name = open_params()
     ex = exchange(hyperliquid_id)
-    current_time = pendulum.now().format('Y_MM_DD_Hmms')
+    current_datetime = pendulum.now().format('Y_MM_DD_HHmmss')
     positions = get_positions(ex)
     trades_history = get_trades(ex)
     s3_url = f's3://{bucket_name}/data/bronze/etl2'
-    data_to_parquet(positions, f'{s3_url}/positions-{current_time}.parquet')
-    data_to_parquet(trades_history, f'{s3_url}/trades-{current_time}.parquet')
+    data_to_parquet(positions, f'{s3_url}/positions-{current_datetime}.parquet')
+    data_to_parquet(trades_history, f'{s3_url}/trades-{current_datetime}.parquet')
 
 
 if __name__=='__main__':
