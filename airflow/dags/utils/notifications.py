@@ -7,6 +7,7 @@ from airflow.providers.smtp.hooks.smtp import SmtpHook
 
 
 def dag_notifier(subject:str, html_content:str, from_email:str = None, to:str = None):
+    """Returns a notifier for dags"""
 
     with SmtpHook('smtp_default') as h:
         if from_email is None:
@@ -31,7 +32,7 @@ dag_success = dag_notifier(
 
 
 class MyTaskNotifier(BaseNotifier):
-    """Basic notifier, prints the task_id, state and a message."""
+    """Basic notifier for tasks, send a mail with the task_id, state and a message."""
 
     def __init__(self, from_email:str = None, to:str = None, subject:str = None, html_content:str = None):
 
@@ -46,10 +47,12 @@ class MyTaskNotifier(BaseNotifier):
 
     @cached_property
     def hook(self) -> SmtpHook:
+        """Returns a SmtpHook"""
 
         return SmtpHook(smtp_conn_id='smtp_default')
 
     def notify(self, context) -> None:
+        """Sends a mail notification"""
 
         ti = context['ti']
         t_id = ti.task_id
@@ -59,10 +62,6 @@ class MyTaskNotifier(BaseNotifier):
         self.subject = f'[Error] The task {t_id} failed'
         self.html_content = f'Hi from MyNotifier !\n{t_id} finished as: {t_state} with {t_tries} tries. Please check log.'
         #self.html_content= self._read_template('./utils/task_template.html')
-
-        print(
-            f"MYNOTIFIER !!!!"
-        )
 
         with self.hook as smtp:
             smtp.send_email_smtp(

@@ -5,9 +5,6 @@ import functools
 
 from airflow.sdk import DAG
 from airflow.operators.python import PythonOperator
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.bash import BashOperator
-#from airflow.operators.
 from airflow.utils.edgemodifier import Label
 
 from utils.notifications import MyTaskNotifier, dag_failed, dag_success
@@ -20,6 +17,7 @@ os.chdir(DAG_PATH)
 
 def run_async(async_func):
     """A decorator for running asynchronous functions"""
+
     @functools.wraps(async_func)
     def wrapper(*args, **kwargs):
         loop = asyncio.get_event_loop()
@@ -28,6 +26,8 @@ def run_async(async_func):
 
 @run_async
 async def bot():
+    """Run the trading bot"""
+
     await trading_bot.main()
 
 default_args = {
