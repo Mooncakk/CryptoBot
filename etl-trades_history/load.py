@@ -17,7 +17,9 @@ USER = 'admin'
 
 
 def run_query(query: str) -> None:
+    """Execute a query and log the result"""
 
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     with snowflake.connector.connect(connection_name='myconnection') as conn:
         cur = conn.cursor().execute(query)
         rows = cur.fetchall()
@@ -26,6 +28,7 @@ def run_query(query: str) -> None:
 
 
 def create_stage(path: str) -> None:
+    """Create a stage in Snowflake"""
 
     run_query(f"""
                 CREATE STAGE IF NOT EXISTS {DATABASE}.{SCHEMA}.{STAGE}
@@ -37,6 +40,7 @@ def create_stage(path: str) -> None:
 
 
 def create_positions_table() -> None:
+    """Create positions table in Snowflake"""
 
     run_query(f'TRUNCATE TABLE IF EXISTS {DATABASE}.{SCHEMA}.POSITIONS')
     run_query(f"""
@@ -54,6 +58,7 @@ def create_positions_table() -> None:
 
 
 def create_trades_table() -> None:
+    """Create trades_history table in Snowflake"""
 
     run_query(f'TRUNCATE TABLE IF EXISTS {DATABASE}.{SCHEMA}.TRADES_HISTORY')
     run_query(f"""
@@ -72,6 +77,7 @@ def create_trades_table() -> None:
 
 
 def get_bucket_file(bucket_name: str, prefix: str) -> Optional[str]:
+    """Get the latest file from a bucket"""
 
     bucket = S3.Bucket(bucket_name)
     path = 'data/silver/etl2/'
@@ -86,6 +92,7 @@ def get_bucket_file(bucket_name: str, prefix: str) -> Optional[str]:
 
 
 def copy_into_table(table: str, filename: str) -> None:
+    """Copy data from a stage to a table"""
 
     run_query(f"""
                 COPY INTO {DATABASE}.{SCHEMA}.{table}
@@ -109,7 +116,6 @@ def get_bucket_name(filename: str = './utils/utils.json') -> str:
 
 def main() -> None:
 
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     bucket_name = get_bucket_name()
     bucket_path = f's3://{bucket_name}/data/silver/etl2/'
     create_stage(bucket_path)
