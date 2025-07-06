@@ -28,21 +28,25 @@ def open_params(path: str = './utils/utils.json') -> tuple[dict[str, str], str]:
 
 
 def exchange(hyperliquid_params: dict[str, str]) -> hyperliquid:
+    """Create an exchange object to request data from hyperliquid"""
 
     return ccxt.hyperliquid(hyperliquid_params)
 
 
 def get_positions(exchange: exchange) -> list:
+    """Get list of open positions"""
 
     return exchange.fetch_positions()
 
 
 def get_trades(exchange: exchange) -> list:
+    """Get list of trades history"""
 
     return exchange.fetch_my_trades()
 
 
 def data_to_parquet(data: list, filename: str) -> Optional[bool]:
+    """Save data to parquet file in s3 bucket"""
 
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)

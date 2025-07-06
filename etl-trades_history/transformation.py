@@ -27,6 +27,7 @@ def get_bucket_name(filename: str = './utils/utils.json') -> str:
 
 
 def get_bucket_file(bucket_name: str, prefix: str) -> Optional[str]:
+    """Get the latest file in a bucket"""
 
     bucket = S3.Bucket(bucket_name)
     path = 'data/bronze/etl2/'
@@ -40,6 +41,7 @@ def get_bucket_file(bucket_name: str, prefix: str) -> Optional[str]:
 
 
 def positions_processing(file: str) -> Optional[DataFrame] :
+    """Process the positions.parquet file"""
 
     try:
         table = pq.read_table(file)
@@ -69,8 +71,8 @@ def positions_processing(file: str) -> Optional[DataFrame] :
     return df_cleaned
 
 
-
 def trades_processing(file: str) -> Optional[DataFrame]:
+    """Process the trades_history.parquet file"""
 
     try:
         table = pq.read_table(file)
@@ -106,6 +108,7 @@ def trades_processing(file: str) -> Optional[DataFrame]:
 
 
 def data_to_parquet(data: DataFrame, path: str) -> Optional[bool]:
+    """Save data to parquet file in s3 bucket"""
 
     try:
         table = pa.Table.from_pandas(data)
