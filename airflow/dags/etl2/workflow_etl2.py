@@ -4,9 +4,10 @@ from pendulum import duration, datetime
 from airflow.sdk import DAG
 from airflow.operators.python import PythonOperator
 from airflow.utils.edgemodifier import Label
+from airflow.providers.standard.sensors.external_task import ExternalTaskSensor
 
 from utils.notifications import MyTaskNotifier, dag_failed, dag_success
-from etl import extraction, transformation, load
+from etl2.etl import extraction, transformation, load
 
 DAG_PATH = f'{os.getenv("AIRFLOW_HOME")}/dags'
 os.chdir(DAG_PATH)
@@ -19,9 +20,9 @@ default_args = {
 }
 
 with DAG(
-    dag_id='CryptoBot_ETL2',
+    dag_id='cryptobot_ETL2',
     description='CryptoBot workflow for ETL2',
-    schedule=duration(hours=2),
+    schedule=None,
     start_date=datetime(2025, 5, 27),
     catchup=False,
     tags=['cryptobot', 'etl2'],

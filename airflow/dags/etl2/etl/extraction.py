@@ -33,16 +33,16 @@ def exchange(hyperliquid_params: dict[str, str]) -> hyperliquid:
     return ccxt.hyperliquid(hyperliquid_params)
 
 
-def get_positions(exchange: exchange) -> list:
+def get_positions(ex: exchange) -> list:
     """Get list of open positions"""
 
-    return exchange.fetch_positions()
+    return ex.fetch_positions()
 
 
-def get_trades(exchange: exchange) -> list:
+def get_trades(ex: exchange) -> list:
     """Get list of trades history"""
 
-    return exchange.fetch_my_trades()
+    return ex.fetch_my_trades()
 
 
 def data_to_parquet(data: list, filename: str) -> Optional[bool]:

@@ -1,4 +1,5 @@
 import os
+
 from pendulum import duration, datetime
 import asyncio
 import functools
@@ -6,10 +7,11 @@ import functools
 from airflow.sdk import DAG
 from airflow.operators.python import PythonOperator
 from airflow.utils.edgemodifier import Label
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
 from utils.notifications import MyTaskNotifier, dag_failed, dag_success
-from etl import extraction, transformation, load
-from bot import trading_bot
+from etl1.etl import extraction, transformation, load
+from etl1.bot import trading_bot
 
 DAG_PATH = f'{os.getenv("AIRFLOW_HOME")}/dags'
 os.chdir(DAG_PATH)
@@ -81,7 +83,17 @@ with DAG(
         max_retry_delay=duration(minutes=5),
     )
 
+    trigger_cryptobot_etl2 = TriggerDagRunOperator(
+        task_id='trigger_cryptobot_etl2',
+        trigger_dag_id='cryptobot_ETL2',
+        default_args=default_args,
+        wait_for_completion=True,
+        poke_interval=30
+
+    )
+
 
 data_collection >> Label('Extract data') >> data_processing
 data_processing >> Label('Processed data') >> data_loading
 data_loading >> Label('Load data') >> bot
+bot >> Label('Run bot') >> trigger_cryptobot_etl2
