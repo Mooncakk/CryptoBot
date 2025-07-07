@@ -144,7 +144,6 @@ def main() -> None:
 
     for coin in crypto_wallet:
 
-        print(coin)
         create_table(coin)
         file = get_bucket_file(bucket_name, coin)
         copy_into_table(coin, file)
@@ -153,4 +152,3 @@ def main() -> None:
 if __name__=='__main__':
 
     main()
-    #run_query(f'drop database {DATABASE}')
