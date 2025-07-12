@@ -55,7 +55,6 @@ with DAG(
         trigger_dag_id='cryptobot_bot',
         wait_for_completion=True,
         allowed_states=['success', 'failed'],
-        failed_states=None,
         poke_interval=30
 
     )
