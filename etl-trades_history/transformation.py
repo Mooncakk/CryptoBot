@@ -8,13 +8,13 @@ import pyarrow.parquet as pq
 from pandas.core.interchange.dataframe_protocol import DataFrame
 import boto3
 from botocore.exceptions import ClientError
-from pendulum import now
+import pendulum
 
 
 S3 = boto3.resource('s3')
 
 
-def get_bucket_name(filename: str = '../../utils/utils.json') -> str:
+def get_bucket_name(filename: str = './utils/utils.json') -> str:
     """Open a json file and gets different parameters"""
 
     with open(filename, 'r') as file:
@@ -71,7 +71,7 @@ def positions_processing(file: str) -> Optional[DataFrame] :
     return df_cleaned
 
 
-def trades_processing(file: str) -> Optional[pd.DataFrame]:
+def trades_processing(file: str) -> Optional[DataFrame]:
     """Process the trades_history.parquet file"""
 
     try:
@@ -91,13 +91,14 @@ def trades_processing(file: str) -> Optional[pd.DataFrame]:
     for key in all_keys:
         df[key] = df['info'].apply(lambda x: x[key])
 
-    df = df[['timestamp', 'coin', 'symbol',
-                'side', 'price', 'amount',
-                'cost', 'closedPnl']]
+    df = df.filter(['timestamp', 'coin', 'symbol',
+                      'side', 'price', 'amount', 'cost', 'closedPnl'])
 
     df[['coin', 'symbol', 'side']] = df[['coin', 'symbol', 'side']].astype('string')
     df['closedPnl'] = df['closedPnl'].astype('float')
     df['timestamp'] = df['timestamp'] // 1000
+    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
+    df['timestamp'] = df['timestamp'].astype('datetime64[s]')
 
     df_cleaned = df.rename(columns={'timestamp': 'date',
                               'amount': 'contracts',
@@ -136,7 +137,7 @@ def main():
     positions = positions_processing(f'{s3_url}/{positions_file}')
     trades_history = trades_processing(f'{s3_url}/{trades_file}')
     s3_silver_url = f's3://{bucket_name}/data/silver/etl2'
-    current_datetime = now(tz='Europe/Paris').format('Y_MM_DD_HHmmss')
+    current_datetime = pendulum.now().format('Y_MM_DD_HHmmss')
     data_to_parquet(positions, f'{s3_silver_url}/positions_cleaned-{current_datetime}.parquet')
     data_to_parquet(trades_history, f'{s3_silver_url}/trades_history_cleaned-{current_datetime}.parquet')
 

@@ -64,7 +64,7 @@ def create_trades_table() -> None:
     run_query(f"""
                 CREATE TABLE IF NOT EXISTS {DATABASE}.{SCHEMA}.TRADES_HISTORY
                 (
-                    date TIMESTAMP_LTZ,
+                    date DATETIME,
                     coin STRING,
                     symbol STRING,
                     side STRING,
@@ -102,7 +102,7 @@ def copy_into_table(table: str, filename: str) -> None:
                 """)
 
 
-def get_bucket_name(filename: str = '../../utils/utils.json') -> str:
+def get_bucket_name(filename: str = './utils/utils.json') -> str:
     """Open a json file and gets different parameters"""
 
     with open(filename, 'r') as file:
@@ -125,7 +125,6 @@ def main() -> None:
     copy_into_table('positions', positions_file)
     trades_history_file = get_bucket_file(bucket_name, 'trades')
     copy_into_table('trades_history', trades_history_file)
-
 
 if __name__=='__main__':
 
