@@ -13,7 +13,7 @@ from botocore.exceptions import ClientError
 S3 = boto3.resource('s3')
 
 
-def open_params(path: str = './utils/utils.json') -> tuple[dict[str, str], str]:
+def open_params(path: str = '../../utils/utils.json') -> tuple[dict[str, str], str]:
     """Open a json file and gets different parameters"""
 
     with open(path, 'r') as file:
@@ -65,7 +65,6 @@ def process_data(file: str) -> Optional[pd.DataFrame]:
     df["date"] = df["date"] // 1000
     df = df.astype(
         {
-            "date": "datetime64[s]",
             "open": "float",
             "high": "float",
             "low": "float",

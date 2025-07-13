@@ -15,7 +15,7 @@ STAGE = 'dataset_etl1'
 
 USER = 'admin'
 
-def open_params(filename: str = './utils/utils.json') -> tuple[dict[str, str], dict]:
+def open_params(filename: str = '../../utils/utils.json') -> tuple[dict[str, str], dict]:
     """Open a json file and gets different parameters"""
 
     with open(filename, 'r') as file:
@@ -82,7 +82,7 @@ def create_table(coin: str) -> None:
 
     run_query(f"""CREATE OR REPLACE TABLE {DATABASE}.{SCHEMA}.{coin}
                   (
-                  date DATETIME,
+                  date TIMESTAMP_LTZ,
                   open FLOAT,
                   high FLOAT,
                   low FLOAT,
@@ -107,7 +107,6 @@ def get_bucket_file(bucket_name: str, prefix: str) -> Optional[str]:
     path = 'data/silver/etl1/'
     response = bucket.objects.filter(Prefix=f'{path}{prefix}')
     files = [file for file in response]
-    print(files)
     filename = files[-1].key
 
     if not files:
