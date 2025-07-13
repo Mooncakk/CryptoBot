@@ -14,7 +14,7 @@ from pendulum import now
 S3 = boto3.resource('s3')
 
 
-def get_bucket_name(filename: str = './utils/utils.json') -> str:
+def get_bucket_name(filename: str = '../../utils/utils.json') -> str:
     """Open a json file and gets different parameters"""
 
     with open(filename, 'r') as file:
@@ -71,7 +71,7 @@ def positions_processing(file: str) -> Optional[DataFrame] :
     return df_cleaned
 
 
-def trades_processing(file: str) -> Optional[DataFrame]:
+def trades_processing(file: str) -> Optional[pd.DataFrame]:
     """Process the trades_history.parquet file"""
 
     try:
@@ -91,14 +91,13 @@ def trades_processing(file: str) -> Optional[DataFrame]:
     for key in all_keys:
         df[key] = df['info'].apply(lambda x: x[key])
 
-    df = df.filter(['timestamp', 'coin', 'symbol',
-                      'side', 'price', 'amount', 'cost', 'closedPnl'])
+    df = df[['timestamp', 'coin', 'symbol',
+                'side', 'price', 'amount',
+                'cost', 'closedPnl']]
 
     df[['coin', 'symbol', 'side']] = df[['coin', 'symbol', 'side']].astype('string')
     df['closedPnl'] = df['closedPnl'].astype('float')
     df['timestamp'] = df['timestamp'] // 1000
-    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
-    df['timestamp'] = df['timestamp'].astype('datetime64[s]')
 
     df_cleaned = df.rename(columns={'timestamp': 'date',
                               'amount': 'contracts',
