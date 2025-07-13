@@ -80,7 +80,9 @@ def create_stage(bucket_path: str, name: str = 's3_int') -> None:
 def create_table(coin: str) -> None:
     """Create a table"""
 
-    run_query(f"""CREATE OR REPLACE TABLE {DATABASE}.{SCHEMA}.{coin}
+    run_query(f'TRUNCATE TABLE IF EXISTS {DATABASE}.{SCHEMA}.{coin}')
+    run_query(f"""
+                CREATE TABLE IF NOT EXISTS {DATABASE}.{SCHEMA}.{coin}
                   (
                   date TIMESTAMP_LTZ,
                   open FLOAT,
@@ -88,7 +90,8 @@ def create_table(coin: str) -> None:
                   low FLOAT,
                   close FLOAT,
                   volume FLOAT
-                  )"""
+                  )
+                """
               )
 
 
