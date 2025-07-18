@@ -15,7 +15,7 @@ STAGE = 'dataset_etl1'
 
 USER = 'admin'
 
-def open_params(filename: str = '../../utils/utils.json') -> tuple[dict[str, str], dict]:
+def open_params(filename: str = './utils/utils.json') -> tuple[dict[str, str], dict]:
     """Open a json file and gets different parameters"""
 
     with open(filename, 'r') as file:

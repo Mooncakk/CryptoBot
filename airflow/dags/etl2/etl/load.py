@@ -102,7 +102,7 @@ def copy_into_table(table: str, filename: str) -> None:
                 """)
 
 
-def get_bucket_name(filename: str = '../../utils/utils.json') -> str:
+def get_bucket_name(filename: str = './utils/utils.json') -> str:
     """Open a json file and gets different parameters"""
 
     with open(filename, 'r') as file:

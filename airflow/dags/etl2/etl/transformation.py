@@ -5,7 +5,6 @@ from typing import Optional
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from pandas.core.interchange.dataframe_protocol import DataFrame
 import boto3
 from botocore.exceptions import ClientError
 from pendulum import now
@@ -14,7 +13,7 @@ from pendulum import now
 S3 = boto3.resource('s3')
 
 
-def get_bucket_name(filename: str = '../../utils/utils.json') -> str:
+def get_bucket_name(filename: str = './utils/utils.json') -> str:
     """Open a json file and gets different parameters"""
 
     with open(filename, 'r') as file:
@@ -40,7 +39,7 @@ def get_bucket_file(bucket_name: str, prefix: str) -> Optional[str]:
     return files[-1].key
 
 
-def positions_processing(file: str) -> Optional[DataFrame] :
+def positions_processing(file: str) -> Optional[pd.DataFrame] :
     """Process the positions.parquet file"""
 
     try:
@@ -106,7 +105,7 @@ def trades_processing(file: str) -> Optional[pd.DataFrame]:
     return df_cleaned
 
 
-def data_to_parquet(data: DataFrame, path: str) -> Optional[bool]:
+def data_to_parquet(data: pd.DataFrame, path: str) -> Optional[bool]:
     """Save data to parquet file in s3 bucket"""
 
     try:
