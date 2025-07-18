@@ -64,7 +64,7 @@ def create_trades_table() -> None:
     run_query(f"""
                 CREATE TABLE IF NOT EXISTS {DATABASE}.{SCHEMA}.TRADES_HISTORY
                 (
-                    date DATETIME,
+                    date TIMESTAMP_LTZ,
                     coin STRING,
                     symbol STRING,
                     side STRING,
