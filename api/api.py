@@ -253,4 +253,4 @@ def get_trades_history(coin: str):
 
         trades_history.append(Trade(**dict_))
 
-    return trades
+    return trades_history
