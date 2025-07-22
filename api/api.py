@@ -249,5 +249,3 @@ def get_trades_history(coin: str):
         trades_history.append(Trade(**dict_))
 
     return trades_history
-
-print(get_trades_history('bitcoin'))
