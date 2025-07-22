@@ -1,0 +1,28 @@
+services:
+
+  extraction_etl1:
+    image: extraction_etl1:v1
+    volumes:
+      - $HOME/.aws:/root/.aws
+      - $PWD/utils/utils.json:/app/utils/utils.json
+
+  transformation_etl1:
+    image: transformation_etl1:v1
+    depends_on:
+      extraction_etl1:
+        condition: service_completed_successfully
+        restart: true
+    volumes:
+      - $HOME/.aws:/root/.aws
+      - $PWD/utils/utils.json:/app/utils/utils.json
+
+  load_etl1:
+    image: load_etl1:v1
+    depends_on:
+      transformation_etl1:
+        condition: service_completed_successfully
+        restart: true
+    volumes:
+      - $HOME/.snowflake:/root/.snowflake
+      - $HOME/.aws:/root/.aws
+      - $PWD/utils/utils.json:/app/utils/utils.json

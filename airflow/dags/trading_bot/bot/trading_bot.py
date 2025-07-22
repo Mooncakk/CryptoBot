@@ -104,7 +104,7 @@ class PerpHyperliquid:
         hyperliquid_auth_object = hyperliquid_id
         self.public_adress = hyperliquid_auth_object["wallet_address"]
         getcontext().prec = 10
-        if hyperliquid_auth_object["private_key"] == None:
+        if hyperliquid_auth_object["private_key"] is None:
             self._auth = False
             self._session = ccxt.hyperliquid()
         else:
@@ -357,8 +357,8 @@ class PerpHyperliquid:
             req_body["nonce"] = nonce
             req_body["signature"] = signature
             resp = await self._session.private_post_exchange(params=req_body)
-            return Info(success=True, message=f"Orders cancelled")
-        except Exception as e:
+            return Info(success=True, message="Orders cancelled")
+        except Exception :
             return Info(success=False, message="Error or no orders to cancel")
         
 def query(sql: str):
@@ -417,6 +417,3 @@ async def main() -> None:
 
 if __name__=='__main__':
     asyncio.run(main())
-
-
-

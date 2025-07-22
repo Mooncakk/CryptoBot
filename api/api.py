@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -41,7 +40,7 @@ class Position(BaseModel):
 
 class Trade(BaseModel):
 
-    date: datetime = None
+    date: str = None
     coin: str = None
     symbol: str = None
     side: str = None
