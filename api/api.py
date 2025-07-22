@@ -5,6 +5,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import snowflake.connector
 
+
+DATABASE = 'cryptobotdb'
+SCHEMA = 'cryptobot_schema'
+
 api = FastAPI(title='CryptobotAPI')
 
 def run_query(sql: str):
@@ -12,10 +16,6 @@ def run_query(sql: str):
     conn = snowflake.connector.connect(connection_name='myconnection')
     cur = conn.cursor().execute(sql)
     return cur.fetchall()
-
-
-DATABASE = 'cryptobotdb'
-SCHEMA = 'cryptobot_schema'
 
 
 class Ohclv(BaseModel):
@@ -94,9 +94,6 @@ def get_coin_info(coin: str):
             'symbol': symbol}
 
 
-
-
-
 @api.get('/coins/{coin}/avg', name='coin average OHCLV',
          description="Get coin's average rates for the last 30 hours" )
 def get_coin_avg(coin: str):
@@ -114,8 +111,6 @@ def get_coin_avg(coin: str):
         avg[data_point[0]] = average
 
     return Ohclv(**avg)
-
-
 
 
 @api.get('/coins/{coin}/max', name='coin higher OHCLV',
