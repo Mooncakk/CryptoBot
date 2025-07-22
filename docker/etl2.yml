@@ -1,0 +1,32 @@
+services:
+
+  extraction_etl2:
+    image: extraction_etl2:v1
+    depends_on:
+      trading_bot:
+        condition: service_completed_successfully
+        restart: true
+    volumes:
+      - $HOME/.aws:/root/.aws
+      - $PWD/utils/utils.json:/app/utils/utils.json
+
+  transformation_etl2:
+    image: transformation_etl2:v1
+    depends_on:
+      extraction_etl2:
+        condition: service_completed_successfully
+        restart: true
+    volumes:
+      - $HOME/.aws:/root/.aws
+      - $PWD/utils/utils.json:/app/utils/utils.json
+
+  load_etl2:
+    image: load_etl2:v1
+    depends_on:
+      transformation_etl2:
+        condition: service_completed_successfully
+        restart: true
+    volumes:
+      - $HOME/.snowflake:/root/.snowflake
+      - $HOME/.aws:/root/.aws
+      - $PWD/utils/utils.json:/app/utils/utils.json

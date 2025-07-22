@@ -1,0 +1,27 @@
+include:
+  - etl1.yml
+  - etl2.yml
+
+services:
+
+  trading_bot:
+    image: trading_bot:v1
+    depends_on:
+      load_etl1:
+        condition: service_completed_successfully
+        restart: true
+    volumes:
+      - $HOME/.snowflake:/root/.snowflake
+      - ./utils/utils.json:/trading_bot/utils/utils.json
+
+  api:
+    image: api:v1
+    depends_on:
+      load_etl2:
+        condition: service_started
+        restart: true
+    ports:
+      - "8000:8000"
+    volumes:
+      - $HOME/.snowflake:/root/.snowflake
+      - $PWD/utils/utils.json:/app/utils.json
