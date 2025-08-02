@@ -3,11 +3,16 @@ pipeline {
     stages {
         stage ('build') {
             steps {
-                sh '''pip install -r requirements.txt'''
+                sh '''
+                pip -m venv env && source env/bin/activate
+                pip install -r requirements.txt'''
             }
         }
     }
     post {
+        always {
+            sh '''deactivate && rm -r env/'''
+        }
         success {
             echo 'Requirements successfully installed'
         }
