@@ -11,7 +11,9 @@ pipeline {
     }
     post {
         always {
-            sh '''rm -r env/'''
+            sh '''
+            deactivate
+            rm -r env/'''
         }
         success {
             echo 'Requirements successfully installed'
