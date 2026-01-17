@@ -66,7 +66,7 @@ def main() -> None:
     crypto_wallet, hyperliquid_id, bucket_name = open_params()
     ex = exchange(hyperliquid_id)
     current_datetime = now(tz='Europe/Paris').format('Y_MM_DD_HHmmss')
-    s3_path = f's3://{bucket_name}/data/bronze/etl1'
+    s3_path = f's3://{bucket_name}/raw/etl1'
 
     for coin in crypto_wallet:
         
