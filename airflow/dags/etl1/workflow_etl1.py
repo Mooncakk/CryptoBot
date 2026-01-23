@@ -107,14 +107,15 @@ def check_rows_count():
     default_args=default_args)
 def etl1():
 
+    start, end = [EmptyOperator(task_id=id) for id in ['start', 'end'] ]
 
     (
-    (EmptyOperator(task_id="start"), empty_table())
+    (start, empty_table())
     >> ingestion_tg()
     >> Label('data loading')
     >> check_loading_status()
     >> data_check_tg()
-    >> EmptyOperator(task_id="end")
+    >> end
      )
 
 etl1()
