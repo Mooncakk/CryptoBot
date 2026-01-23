@@ -1,0 +1,36 @@
+version: 2
+
+sources:
+  - name: raw_data
+    database: cryptobot_db
+    schema: raw
+    tables:
+      - name: raw_ohclv
+        columns:
+          - name: date
+            tests:
+              - not_null
+
+          - name: symbol
+            tests:
+              - not_null
+
+          - name: open
+            tests:
+              - not_null
+
+          - name: high
+            tests:
+              - not_null
+
+          - name: low
+            tests:
+              - not_null
+
+          - name: close
+            tests:
+              - not_null
+
+          - name: volume
+            tests:
+              - not_null
