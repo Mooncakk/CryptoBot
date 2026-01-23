@@ -26,7 +26,7 @@ def empty_table():
     return SQLExecuteQueryOperator(
         task_id='empty_table',
         conn_id='SNOW_DB',
-        sql='TRUNCATE TABLE CRYPTOBOT_DB.RAW.OHCLV;',
+        sql='TRUNCATE TABLE CRYPTOBOT_DB.RAW.RAW_OHCLV;',
         return_last=True,
         show_return_value_in_logs=True
     )
@@ -60,7 +60,7 @@ def check_loading_status():
     timestamp = ti.xcom_pull(task_ids='ingestion_tg.data_ingestion', key='timestamp')
     hook = SnowflakeHook(snowflake_conn_id='SNOW_DB')
     result = hook.get_first(f"""SELECT DISTINCT STATUS FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(
-                                TABLE_NAME=>'RAW.OHCLV', 
+                                TABLE_NAME=>'RAW.RAW_OHCLV', 
                                 START_TIME=>DATEADD(hours, -1, CURRENT_TIMESTAMP()),
                                 PIPE_NAME=>'COMMON.LOAD_RAW_DATA'
                                 )) 
@@ -78,7 +78,7 @@ def db_rows_count():
     return SQLExecuteQueryOperator(
         task_id='db_rows_count',
         conn_id='SNOW_DB',
-        sql='SELECT COUNT(*) FROM CRYPTOBOT_DB.RAW.OHCLV;',
+        sql='SELECT COUNT(*) FROM CRYPTOBOT_DB.RAW.RAW_OHCLV;',
         return_last=True,
         show_return_value_in_logs=True
     )
