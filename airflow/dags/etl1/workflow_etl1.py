@@ -1,7 +1,6 @@
-from asyncio import Task
+
 
 from pendulum import duration, datetime
-
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
@@ -10,19 +9,11 @@ from airflow.sdk import dag, task, task_group
 from airflow.sdk import get_current_context
 from airflow.utils.edgemodifier import Label
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
-from cosmos import (
-    ProfileConfig,
-    DbtDag,
-    ProjectConfig,
-    ExecutionConfig,
-    DbtTaskGroup,
-    RenderConfig,
-    SourceRenderingBehavior,
-)
+from cosmos import ProfileConfig, ProjectConfig, ExecutionConfig, DbtTaskGroup, RenderConfig, SourceRenderingBehavior
 from cosmos.profiles import SnowflakePrivateKeyPemProfileMapping
 
 #from utils.notifications import MyTaskNotifier, dag_failed, dag_success
-from etl1.etl import extraction
+from etl1.scripts import extraction
 
 default_args = {
     'owner': 'cryptobot',
