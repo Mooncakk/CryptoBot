@@ -10,6 +10,16 @@ from airflow.sdk import dag, task, task_group
 from airflow.sdk import get_current_context
 from airflow.utils.edgemodifier import Label
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
+from cosmos import (
+    ProfileConfig,
+    DbtDag,
+    ProjectConfig,
+    ExecutionConfig,
+    DbtTaskGroup,
+    RenderConfig,
+    SourceRenderingBehavior,
+)
+from cosmos.profiles import SnowflakePrivateKeyPemProfileMapping
 
 #from utils.notifications import MyTaskNotifier, dag_failed, dag_success
 from etl1.etl import extraction
@@ -48,7 +58,7 @@ def wait_task():
 
     return TimeDeltaSensor(
         task_id='wait_task',
-        delta=duration(seconds=20)
+        delta=duration(seconds=30)
     )
 
 @task.sensor(poke_interval=20,
@@ -96,6 +106,31 @@ def check_rows_count():
 
     print(f"Nombre de lignes = {rows_ingested}")
 
+profile_config = ProfileConfig(
+                    profile_name="cryptobot_dbt",
+                    target_name="dev",
+                    profile_mapping=SnowflakePrivateKeyPemProfileMapping(
+                                    conn_id = 'SNOW_DB',
+                                    profile_args = {'schema': 'staging'},)
+
+)
+
+def dbt_modeling():
+    return DbtTaskGroup(
+            group_id='dbt_modeling' ,
+            project_config=ProjectConfig(
+                dbt_project_path=f"/opt/airflow/dags/dbt/cryptobot_dbt",
+            ),
+            profile_config=profile_config,
+            execution_config=ExecutionConfig(
+                dbt_executable_path=f"/opt/airflow/dbt_venv/bin/dbt",
+            ),
+            default_args={"retries": 0},
+            render_config=RenderConfig(
+                source_rendering_behavior=SourceRenderingBehavior.WITH_TESTS_OR_FRESHNESS
+            )
+            )
+
 @dag(
     description='Cryptobot workflow for ETL1',
     schedule=duration(hours=2),
@@ -115,6 +150,7 @@ def etl1():
     >> Label('data loading')
     >> check_loading_status()
     >> data_check_tg()
+    >> dbt_modeling()
     >> end
      )
 
