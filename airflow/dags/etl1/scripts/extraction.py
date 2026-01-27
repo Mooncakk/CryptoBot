@@ -38,10 +38,10 @@ def exchange(hyperliquid_params: dict[str, str]) -> hyperliquid:
 def get_ohlcv(ex: exchange, symbol: str, coin: str) -> list[list]:
     """Get coin's data"""
 
-    date = now() - duration(hours=30)
+    date = now() - duration(hours=14)
     since_date = date.int_timestamp * 1000
 
-    data = ex.fetch_ohlcv(symbol, '2h', since=since_date, limit=15)
+    data = ex.fetch_ohlcv(symbol, '1h', since=since_date, limit=14)
     for row in data:
         row.append(coin)
 
