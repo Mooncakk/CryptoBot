@@ -5,6 +5,8 @@ import json
 import logging
 from typing import List, Optional
 from decimal import Decimal, getcontext, ROUND_DOWN
+import tomllib
+from pathlib import Path
 
 import ccxt.async_support as ccxt
 import ta
@@ -12,9 +14,9 @@ import snowflake.connector
 from pydantic import BaseModel
 
 
-WAREHOUSE = 'cryptobot'
-DATABASE = 'cryptobotdb'
-SCHEMA = 'cryptobot_schema'
+#WAREHOUSE = 'CRYPTOBOT_WH'
+DATABASE = 'CRYPTOBOT_DB'
+SCHEMA = 'STAGING'
 
 
 class UsdtBalance(BaseModel):
@@ -360,12 +362,18 @@ class PerpHyperliquid:
             return Info(success=True, message="Orders cancelled")
         except Exception :
             return Info(success=False, message="Error or no orders to cancel")
-        
-def query(sql: str):
 
-    conn = snowflake.connector.connect(connection_name='myconnection')
-    cur = conn.cursor().execute(sql)
-    return cur.fetch_pandas_all()
+def query(sql_query: str):
+
+    file_path = Path('utils/snowflake_connection/config.toml')
+
+    with open(file_path, "rb") as file:
+        connection_params = tomllib.load(file)['connections']['cryptobot_conn']
+
+    with snowflake.connector.connect(**connection_params) as conn:
+        cur = conn.cursor().execute(sql_query)
+        return cur.fetch_pandas_all()
+
 
 def open_params(filename: str) -> tuple[dict[str, str], dict[str, str]]:
     """Open a json file and gets different parameters"""
@@ -387,32 +395,42 @@ async def main() -> None:
     await ex.load_markets()
     usd = await ex.get_balance()
 
-    for crypto_name in crypto_wallet:
+    for coin in crypto_wallet:
 
-        sql = f'select * from {DATABASE}.{SCHEMA}.{crypto_name}'
+        sql = f"""SELECT
+                        DATE, 
+                        SYMBOL,
+                        OPEN, 
+                        HIGH, 
+                        LOW, 
+                        CLOSE, 
+                        VOLUME
+                FROM {DATABASE}.{SCHEMA}.OHCLV
+                WHERE SYMBOL = '{coin}'
+                ORDER BY DATE"""
         df = query(sql)
-        pairs = crypto_wallet.get(crypto_name)
-        coin = pairs.split('/')[0]
+        pairs = f"{coin}/USD"
         df["rsi"] = ta.momentum.rsi(df["CLOSE"], 14)
-        positions = await ex.get_open_positions(pairs=[f"{coin}/USD"])
+
+        positions = await ex.get_open_positions(pairs=[pairs])
         coin_price = df.iloc[-1]["CLOSE"]
         logging.info(f"Balance: {usd.total} USD")
         logging.info(f"{coin} {coin_price} USD")
-        rsi = df.iloc[-2]["rsi"]
-
+        rsi = df.iloc[-1]["rsi"]
+   
         if len(positions) > 0:
             if rsi < 60:
-                order = await ex.place_order(f"{coin}/USD", "sell", None, positions[0].size, "market", True)
-                logging.info(f'Close order\n\n{order}')
+                order = await ex.place_order(pairs, "sell", None, positions[0].size, "market", True)
+                logging.info(f'Close order\n\n{order}\n')
 
         elif len(positions) == 0:
             if rsi > 60:
-                order = await ex.place_order(f"{coin}/USD", "buy", None, (usd.total * 1) / coin_price, "market", False)
-                logging.info(f'Buy order\n\n{order}')
+                order = await ex.place_order(pairs, "buy", None, (usd.total * 1) / coin_price, "market", False)
+                logging.info(f'Buy order\n\n{order}\n')
 
             else :
-                logging.info(f'No position taken or closed, RSI is under 60 ({round(rsi, 2)}) and 0 {coin} in the wallet')
-            
+                logging.info(f'No position taken or closed, RSI is under 60 ({round(rsi, 2)}) and 0 {coin} in the wallet\n')
+
     await ex.close()
 
 if __name__=='__main__':
