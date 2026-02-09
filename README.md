@@ -1,7 +1,6 @@
 # CryptoBot - Automated Cryptocurrency Trading System
 
-A comprehensive data engineering pipeline and automated trading bot for cryptocurrency markets using Hyperliquid exchange. This system orchestrates data extraction, transformation, loading (ETL), and automated trading decisions using Apache Airflow.
-
+A comprehensive data engineering pipeline and automated trading bot for cryptocurrency markets using Hyperliquid exchange. This system orchestrates data ingestion, data modeling, and automated trading decisions.
 ## 🏗️ Architecture Overview
 
 This project follows a modern data engineering architecture pattern, similar to how a factory assembly line processes raw materials into finished products:
@@ -49,26 +48,27 @@ This project follows a modern data engineering architecture pattern, similar to 
 - **Dockerized Airflow** for workflow orchestration
 - **AWS S3** for data storage
 - **Snowflake** for data warehousing
+- **Dbt for data modeling
 - **Email notifications** for monitoring
 
 ## 📋 Prerequisites
 
-- Python 3.8+
-- Apache Airflow 2.x
+- Python 3.11+
+- Apache Airflow 3.x
 - AWS Account with S3 access
 - Snowflake account
+- Dbt
 - Hyperliquid API credentials
 - SMTP server for notifications
 
 ## ⚙️ Configuration
 
 ### Snowflake Setup
-The system automatically creates:
-- Warehouse: `cryptobot`
-- Database: `cryptobotdb`
-- Schema: `cryptobot_schema`
-- Tables for each cryptocurrency
-- Stage for data loading
+- Warehouse: `cryptobot_wh`
+- Database: `cryptobot_db`
+- Schemas : `raw`, `staging`
+- Table : `raw_ohclv`
+- External stage for data loading
 
 ### Trading Parameters
 - **RSI Period**: 14 periods
@@ -79,13 +79,11 @@ The system automatically creates:
 ## 🔄 Workflow
 
 1. **Data Collection** (Every 2 hours)
-   - Fetches last 60 hours of 4-hour OHLCV data
+   - Fetches last 14 hours of 1-hour OHLCV data
    - Stores raw data in S3
 
 2. **Data Processing**
-   - Converts timestamps to datetime format
-   - Cleans and validates data
-   - Saves processed data to S3
+   - with dbt
 
 3. **Data Loading**
    - Loads processed data into Snowflake
