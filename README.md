@@ -1,4 +1,4 @@
-# CryptoBot - Automated Cryptocurrency Trading System
+# CryptoBot - Automated Cryptocurrency Trading System (WIP)
 
 A comprehensive data engineering pipeline and automated trading bot for cryptocurrency markets using Hyperliquid exchange. This system orchestrates data ingestion, data modeling, and automated trading decisions.
 ## 🏗️ Architecture Overview
